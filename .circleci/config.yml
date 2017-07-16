@@ -1,25 +1,21 @@
-# Javascript Node CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-javascript/ for more details
-#
+defaults: &defaults
+  working_directory: /tmp
+  docker:
+    - image: node:8
+ 
 version: 2
 dependencies:
   pre:
     - npm install -g npm
 jobs:
   build:
-    docker:
-      - image: node:8
+    <<: *defaults
     steps:
       - checkout
-
-      # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
+          - root-dependencies-{{ checksum "package.json" }}
+          - root-dependencies-
       - run:
           name: "Checking Versions"
           command: |
@@ -29,40 +25,164 @@ jobs:
           name: "Install root dependencies"
           command: |
             yarn install
+      - save_cache:
+          paths:
+            - node_modules
+          key: root-dependencies-{{ checksum "package.json" }}
+      - persist_to_workspace:
+          root: .
+          paths: .
+  bootstrap-packages:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /tmp
       - run:
           name: "Bootstrapping packages"
           command: |
             npm run bootstrap -- --concurrency 1 --npm-client=yarn
+      - persist_to_workspace:
+          root: .
+          paths: .
+  example/kitchen-sink:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /tmp
+      - run:
+          name: "Running kitchen-sink"
+          command: |
+            echo "TODO"
+  bootstrap-test-cra:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /tmp
       - run:
           name: "Bootstrapping test-cra"
           command: |
             npm run bootstrap:test-cra
+      - persist_to_workspace:
+          root: .
+          paths: .
+  example/test-cra:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /tmp
+      - run:
+          name: "Running test-cra"
+          command: |
+            echo "TODO"
+  bootstrap-react-native:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /tmp
       - run:
           name: "Bootstrapping react native"
           command: |
             npm run bootstrap:react-native-vanilla
+      - persist_to_workspace:
+          root: .
+          paths: .
+  example/react-native:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /tmp
+      - run:
+          name: "Running react-native"
+          command: |
+            echo "TODO"
+
+  bootstrap-docs:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /tmp
       - run:
           name: "Bootstrapping docs"
           command: |
             npm run bootstrap:docs
+      - persist_to_workspace:
+          root: .
+          paths: .
+  docs:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /tmp
+      - run:
+          name: "Running docs"
+          command: |
+            echo "TODO"
+
+
+  lint:
+    <<: *defaults
+    steps:
       - run:
           name: "Linting"
           command: |
             npm run lint
+  unit-test:
+    <<: *defaults
+    steps:
       - run:
           name: "Unit testing"
           command: |
             npm run test -- --coverage
-            npm run coverage
+            npm run coverage        
 
-
-
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
-        
-      # run tests!
-      - run: yarn test
-
-
+workflows:
+  version: 2
+  build_accept_deploy:
+    jobs:
+      - build
+      - bootstrap-packages:
+          requires:
+            - build
+      - bootstrap-docs:
+          requires:
+            - bootstrap-packages
+      - bootstrap-test-cra:
+          requires:
+            - bootstrap-packages
+            - bootstrap-docs
+      - bootstrap-react-native:
+          requires:
+            - bootstrap-packages
+            - bootstrap-test-cra
+      - example/kitchen-sink:
+          requires:
+            - bootstrap-packages
+      - example/test-cra:
+          requires:
+            - bootstrap-packages
+            - bootstrap-test-cra
+      - example/react-native:
+          requires:
+            - bootstrap-packages
+            - bootstrap-react-native
+      - docs:
+          requires:
+            - bootstrap-packages
+            - bootstrap-docs
+      - lint:
+          requires:
+            - bootstrap-packages
+            - bootstrap-docs
+            - bootstrap-test-cra
+            - bootstrap-react-native
+      - unit-test:
+          requires:
+            - bootstrap-packages
+            - bootstrap-docs
+            - bootstrap-test-cra
+            - bootstrap-react-native
+      - deploy:
+          requires:
+            - unit-test
+            - docs
+            - example/kitchen-sink
