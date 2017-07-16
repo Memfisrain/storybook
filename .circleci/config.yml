@@ -1,0 +1,57 @@
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+version: 2
+dependencies:
+  pre:
+    - npm install -g npm
+jobs:
+  build:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: "Checking Versions"
+          command: |
+            node --version
+            npm --version
+      - run:
+          name: "Install root dependencies"
+          command: |
+            yarn install
+      - run:
+          name: "Bootstrapping"
+          command: |
+            npm run bootstrap -- --concurrency 1
+            npm run bootstrap:test-cra
+            npm run bootstrap:react-native-vanilla
+            npm run bootstrap:docs
+      - run:
+          name: "Linting"
+          command: |
+            npm run lint
+      - run:
+          name: "Unit testing"
+          command: |
+            npm run test -- --coverage
+            npm run coverage
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+        
+      # run tests!
+      - run: yarn test
+
+
