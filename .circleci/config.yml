@@ -12,6 +12,14 @@ jobs:
       - image: node:8
     steps:
       - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
       - run:
           name: "Checking Versions"
           command: |
@@ -22,11 +30,20 @@ jobs:
           command: |
             yarn install
       - run:
-          name: "Bootstrapping"
+          name: "Bootstrapping packages"
           command: |
-            npm run bootstrap -- --concurrency 1
+            npm run bootstrap -- --concurrency 1 --npm-client=yarn
+      - run:
+          name: "Bootstrapping test-cra"
+          command: |
             npm run bootstrap:test-cra
+      - run:
+          name: "Bootstrapping react native"
+          command: |
             npm run bootstrap:react-native-vanilla
+      - run:
+          name: "Bootstrapping docs"
+          command: |
             npm run bootstrap:docs
       - run:
           name: "Linting"
@@ -38,12 +55,6 @@ jobs:
             npm run test -- --coverage
             npm run coverage
 
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
 
 
       - save_cache:
