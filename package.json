@@ -6,7 +6,7 @@
     "url": "https://github.com/storybooks/storybook.git"
   },
   "scripts": {
-    "bootstrap": "lerna bootstrap --concurrency 1 --npm-client=yarn --hoist",
+    "bootstrap": "lerna bootstrap --concurrency 1 --npm-client=\"yarn\" --hoist",
     "bootstrap:docs": "cd docs && yarn install",
     "bootstrap:test-cra": "npm run build-packs && lerna exec --scope test-cra -- yarn install",
     "bootstrap:react-native-vanilla": "lerna exec --scope react-native-vanilla -- yarn install",

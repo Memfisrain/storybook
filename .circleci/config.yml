@@ -16,6 +16,7 @@ jobs:
           command: |
             node --version
             npm --version
+            yarn --version
   build:
     <<: *defaults
     steps:
@@ -39,7 +40,7 @@ jobs:
       - run:
           name: "Bootstrapping"
           command: |
-            npm run bootstrap -- --concurrency 1 --npm-client=yarn
+            npm run bootstrap
       - save_cache:
           key: package-dependencies-{{ checksum "package.json" }}
           paths:
@@ -69,7 +70,7 @@ jobs:
       - run:
           name: "Bootstrapping"
           command: |
-            npm run bootstrap -- --concurrency 1 --npm-client=yarn
+            npm run bootstrap
             npm run bootstrap:test-cra
       - run:
           name: "Running test-cra"
@@ -90,7 +91,7 @@ jobs:
       - run:
           name: "Bootstrapping packages"
           command: |
-            npm run bootstrap -- --concurrency 1 --npm-client=yarn
+            npm run bootstrap
             npm run bootstrap:react-native-vanilla
       - run:
           name: "Running react-native"
@@ -151,12 +152,12 @@ jobs:
             npm run bootstrap:docs
             npm run bootstrap:test-cra
             npm run bootstrap:react-native-vanilla
-            npm run bootstrap -- --concurrency 1 --npm-client=yarn
+            npm run bootstrap
       - run:
           name: "Unit testing"
           command: |
             npm run test -- --coverage
-            npm run coverage        
+            npm run coverage
 
 workflows:
   version: 2
